@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebSocket Test</title>
+</head>
+<body>
+
+<input id="messageInput" placeholder="Type message">
+<button onclick="send()">Send</button>
+
+<ul id="messages"></ul>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<script>
+  const token = prompt("Paste JWT token");
+
+  const socket = io('http://localhost:3000', {
+    auth: { token }
+  });
+
+  socket.on('connect', () => {
+    console.log('Connected to WS');
+  });
+
+  socket.on('message', (msg) => {
+    const li = document.createElement('li');
+    li.innerText = msg;
+    document.getElementById('messages').appendChild(li);
+  });
+
+  function send() {
+    const input = document.getElementById('messageInput');
+    socket.emit('message', input.value);
+    input.value = '';
+  }
+</script>
+
+</body>
+</html>
