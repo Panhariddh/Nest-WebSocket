@@ -15,6 +15,8 @@ import { Repository } from 'typeorm';
 
 import { UserModel } from 'src/app/database/models/user.model';
 import jwtConstants from 'src/app/utils/jwt.constants';
+import { MessageModel } from 'src/app/database/models/chat/message.model';
+import { MessageType } from 'src/app/common/enum/message.enum';
 
 @WebSocketGateway({
   cors: {
@@ -32,6 +34,8 @@ export class ChatGateway
     private jwtService: JwtService,
     @InjectRepository(UserModel)
     private userRepo: Repository<UserModel>,
+    @InjectRepository(MessageModel)
+    private messageRepo: Repository<MessageModel>,
   ) {}
 
   // ==============================
@@ -81,7 +85,7 @@ export class ChatGateway
   // PUBLIC MESSAGE (broadcast)
   // ==============================
   @SubscribeMessage('public-message')
-  handlePublicMessage(
+  async handlePublicMessage(
     @MessageBody() message: string,
     @ConnectedSocket() client: Socket,
   ) {
@@ -89,11 +93,17 @@ export class ChatGateway
 
     if (!user) return;
 
-    this.server.emit('public-message', {
-      from: user.name,
-      message,
-      time: new Date(),
-    });
+     const saved = await this.messageRepo.save({
+        sender: user,
+        content: message,
+        type: MessageType.PUBLIC,
+      });
+
+      this.server.emit('public-message', {
+        from: user.name,
+        message: saved.content,
+        time: saved.createdAt,
+      });
   }
 
   // ==============================
@@ -107,21 +117,42 @@ export class ChatGateway
   ) {
     const sender = client.data.user;
 
-    if (!sender) return;
-
-    const targetUser = await this.userRepo.findOne({
+    const target = await this.userRepo.findOne({
       where: { id: data.targetUserId },
     });
 
-    if (!targetUser) {
-      client.emit('error', 'Target user not found');
-      return;
-    }
+    if (!target) return;
 
-    this.server.to(`user-${targetUser.id}`).emit('private-message', {
+    const saved = await this.messageRepo.save({
+      sender,
+      receiver: target,
+      content: data.message,
+      type: MessageType.PRIVATE,
+    });
+
+    this.server.to(`user-${target.id}`).emit('private-message', {
       from: sender.name,
-      message: data.message,
-      time: new Date(),
+      message: saved.content,
+      time: saved.createdAt,
     });
   }
+
+  @SubscribeMessage('load-messages')
+  async loadMessages(@ConnectedSocket() client: Socket) {
+    const messages = await this.messageRepo.find({
+      where: { type: MessageType.PUBLIC },
+      order: { createdAt: 'ASC' },
+      take: 50,
+    });
+
+    client.emit(
+      'load-messages',
+      messages.map((m) => ({
+        from: m.sender.name,
+        message: m.content,
+        time: m.createdAt,
+      })),
+    );
+  }
+
 }

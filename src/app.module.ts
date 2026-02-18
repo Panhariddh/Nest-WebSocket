@@ -8,12 +8,13 @@ import { join } from 'path';
 import { ConfigModule } from './app/config/config.module';
 import { UserModel } from './app/database/models/user.model';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MessageModel } from './app/database/models/chat/message.model';
 
 @Module({
   imports: [
     ConfigModule,
     AuthModule,
-    TypeOrmModule.forFeature([UserModel]),
+    TypeOrmModule.forFeature([UserModel, MessageModel]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),

@@ -19,4 +19,9 @@ export class AuthController {
   check(@Req() req) {
     return req.user;
   }
+
+  @Post('logout')
+  logout() {
+    return { message: 'Logged out' };
+  }
 }
