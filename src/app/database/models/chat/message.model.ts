@@ -23,6 +23,9 @@ export class MessageModel {
   @Column('text')
   content: string;
 
+  @Column({ default: false })
+  isRead: boolean;
+
   @Column({
     type: 'enum',
     enum: MessageType,
