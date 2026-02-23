@@ -14,8 +14,8 @@ import { MessageModel } from "src/app/database/models/chat/message.model";
     TypeOrmModule.forFeature([UserModel, MessageModel]),
     PassportModule,
     JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: jwtConstants.expiresIn as any },
+      secret: jwtConstants.access.secret,
+      signOptions: { expiresIn: jwtConstants.access.expiresIn },
     }),
   ],
   providers: [AuthService, JwtStrategy],

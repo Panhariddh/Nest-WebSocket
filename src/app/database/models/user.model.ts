@@ -21,4 +21,7 @@ export class UserModel {
     default: UserRole.USER,
   })
   role: UserRole;
+
+  @Column({ type: 'text', nullable: true })
+  refreshToken: string | null;
 }

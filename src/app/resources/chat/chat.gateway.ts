@@ -51,7 +51,7 @@ export class ChatGateway
 
       // 1️.Verify JWT
       const decoded = this.jwtService.verify(token, {
-        secret: jwtConstants.secret,
+        secret: jwtConstants.access.secret,
       });
 
       // 2️.Load real user from database
